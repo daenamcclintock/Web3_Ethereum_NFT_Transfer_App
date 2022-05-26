@@ -13,27 +13,36 @@ const createEthereumContract = () => {
   const signer = provider.getSigner();
   const transactionsContract = new ethers.Contract(contractAddress, contractABI, signer);
 
+  console.log('THIS IS PROVIDER', provider)
+  console.log('THIS IS SIGNER', signer)
+  console.log('THIS IS transactionsContract', transactionsContract)
+
   return transactionsContract;
 };
 
+// Function to get the current account, all transactions, send transactions, and connect wallet (if not already connected)
 export const TransactionsProvider = ({ children }) => {
-  const [formData, setformData] = useState({ addressTo: "", amount: "", keyword: "", message: "" });
-  const [currentAccount, setCurrentAccount] = useState("");
-  const [isLoading, setIsLoading] = useState(false);
-  const [transactionCount, setTransactionCount] = useState(localStorage.getItem("transactionCount"));
-  const [transactions, setTransactions] = useState([]);
+  const [formData, setformData] = useState({ addressTo: "", amount: "", keyword: "", message: "" }); // Sets state for the input form to send Ethereum
+  const [currentAccount, setCurrentAccount] = useState(""); // Sets state for the currently connected Metamask account
+  const [isLoading, setIsLoading] = useState(false); // Sets state to display "Loading ___" if the transaction is currently loading
+  const [transactionCount, setTransactionCount] = useState(localStorage.getItem("transactionCount")); // Sets state with the number of transactions from the currently connected Metamask wallet
+  const [transactions, setTransactions] = useState([]); // Sets state with the data passed into each transaction that is sent
 
+  // Function to change the formData state when something is entered into the input fields
+  // Will dynamically update state for each letter that is typed
   const handleChange = (e, name) => {
     setformData((prevState) => ({ ...prevState, [name]: e.target.value }));
   };
 
+  // Function to get all of the transactions 
   const getAllTransactions = async () => {
     try {
-      if (ethereum) {
+      if (ethereum) { // If connected to a Metamask wallet and ethereum is present, run the below code
         const transactionsContract = createEthereumContract();
 
-        const availableTransactions = await transactionsContract.getAllTransactions();
+        const availableTransactions = await transactionsContract.getAllTransactions(); // Gets all transactions based on the Ethereum contract
 
+        // Maps through the transactions and creates an object of key-value pairs to save the data in variables
         const structuredTransactions = availableTransactions.map((transaction) => ({
           addressTo: transaction.receiver,
           addressFrom: transaction.sender,
@@ -45,33 +54,39 @@ export const TransactionsProvider = ({ children }) => {
 
         console.log(structuredTransactions);
 
-        setTransactions(structuredTransactions);
-      } else {
+        setTransactions(structuredTransactions); // Sets the transactions state to be the array of all transaction objects
+      } 
+      else {
         console.log("Ethereum is not present");
       }
-    } catch (error) {
+    }
+    catch (error) { // Catch error and console log it
       console.log(error);
     }
   };
 
+  // Function to check if the user has Metamask installed
   const checkIfWalletIsConnect = async () => {
     try {
-      if (!ethereum) return alert("Please install MetaMask.");
+      if (!ethereum) return alert("Please install MetaMask."); // If no wallet connected, alert user to install Metamask
 
-      const accounts = await ethereum.request({ method: "eth_accounts" });
+      const accounts = await ethereum.request({ method: "eth_accounts" }); // Grab all of the accounts associated with the user's Metamask
 
-      if (accounts.length) {
+      if (accounts.length) { // If at least one account exists, set the current account to the first account in the array
         setCurrentAccount(accounts[0]);
 
-        getAllTransactions();
-      } else {
+        getAllTransactions(); // Get all of the transactions associated with the currently logged in account
+      }
+      else {
         console.log("No accounts found");
       }
-    } catch (error) {
+    }
+    catch (error) {
       console.log(error);
     }
   };
 
+  // Function to check if a transaction exists and store the transaction count locally
   const checkIfTransactionsExists = async () => {
     try {
       if (ethereum) {
@@ -80,7 +95,8 @@ export const TransactionsProvider = ({ children }) => {
 
         window.localStorage.setItem("transactionCount", currentTransactionCount);
       }
-    } catch (error) {
+    }
+    catch (error) {
       console.log(error);
 
       throw new Error("No ethereum object");
@@ -91,7 +107,7 @@ export const TransactionsProvider = ({ children }) => {
     try {
       if (!ethereum) return alert("Please install MetaMask.");
 
-      const accounts = await ethereum.request({ method: "eth_requestAccounts", });
+      const accounts = await ethereum.request({ method: "eth_requestAccounts", }); // Request to send Ethereum
 
       setCurrentAccount(accounts[0]);
       window.location.reload();
@@ -107,14 +123,14 @@ export const TransactionsProvider = ({ children }) => {
       if (ethereum) {
         const { addressTo, amount, keyword, message } = formData;
         const transactionsContract = createEthereumContract();
-        const parsedAmount = ethers.utils.parseEther(amount);
+        const parsedAmount = ethers.utils.parseEther(amount); // Built-in ethers function that parses the amount of ether into GWEI (hexadecimal)
 
         await ethereum.request({
           method: "eth_sendTransaction",
           params: [{
             from: currentAccount,
-            to: addressTo,
-            gas: "0x5208",
+            to: addressTo, // Getting addressTo variable from formData state
+            gas: "0x5208", // Amount of gas we are allowing this transaction to spend (written in hexadecimal) - equates to 0.000021 ETH or 21000 GWEI 
             value: parsedAmount._hex,
           }],
         });
