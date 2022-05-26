@@ -25,7 +25,7 @@ export const TransactionsProvider = ({ children }) => {
   const [formData, setformData] = useState({ addressTo: "", amount: "", keyword: "", message: "" }); // Sets state for the input form to send Ethereum
   const [currentAccount, setCurrentAccount] = useState(""); // Sets state for the currently connected Metamask account
   const [isLoading, setIsLoading] = useState(false); // Sets state to display "Loading ___" if the transaction is currently loading
-  const [transactionCount, setTransactionCount] = useState(localStorage.getItem("transactionCount")); // Sets state with the number of transactions from the currently connected Metamask wallet
+  const [transactionCount, setTransactionCount] = useState(localStorage.getItem("transactionCount")); // Sets state with the number of transactions from the currently connected Metamask wallet (saves the count to local storage)
   const [transactions, setTransactions] = useState([]); // Sets state with the data passed into each transaction that is sent
 
   // Function to change the formData state when something is entered into the input fields
@@ -123,40 +123,45 @@ export const TransactionsProvider = ({ children }) => {
       if (ethereum) {
         const { addressTo, amount, keyword, message } = formData;
         const transactionsContract = createEthereumContract();
-        const parsedAmount = ethers.utils.parseEther(amount); // Built-in ethers function that parses the amount of ether into GWEI (hexadecimal)
+        const parsedAmount = ethers.utils.parseEther(amount); // Built-in ethers function that parses the amount of ether into GWEI
 
         await ethereum.request({
           method: "eth_sendTransaction",
           params: [{
-            from: currentAccount,
+            from: currentAccount, // Currently logged in Metamask account
             to: addressTo, // Getting addressTo variable from formData state
             gas: "0x5208", // Amount of gas we are allowing this transaction to spend (written in hexadecimal) - equates to 0.000021 ETH or 21000 GWEI 
-            value: parsedAmount._hex,
+            value: parsedAmount._hex, // GWEI parsed ether transfer amount converted to hexadecimal
           }],
         });
 
+        // Calling addToBlockchain function from the smart contract
         const transactionHash = await transactionsContract.addToBlockchain(addressTo, parsedAmount, message, keyword);
 
+        // While the smart contract is adding information to the blockchain, console log a loading message
         setIsLoading(true);
         console.log(`Loading - ${transactionHash.hash}`);
         await transactionHash.wait();
         console.log(`Success - ${transactionHash.hash}`);
         setIsLoading(false);
 
-        const transactionsCount = await transactionsContract.getTransactionCount();
+        const transactionsCount = await transactionsContract.getTransactionCount(); // Get the transaction count and save to a variable
 
-        setTransactionCount(transactionsCount.toNumber());
+        setTransactionCount(transactionsCount.toNumber()); // Set state as the integer of transaction count
         window.location.reload();
-      } else {
+      } 
+      else {
         console.log("No ethereum object");
       }
-    } catch (error) {
+    } 
+    catch (error) {
       console.log(error);
 
       throw new Error("No ethereum object");
     }
   };
 
+  // After the page loads, run functions to check if Metamask wallet is connected and if any transactions exist
   useEffect(() => {
     checkIfWalletIsConnect();
     checkIfTransactionsExists();
