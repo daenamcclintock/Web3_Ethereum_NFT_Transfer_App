@@ -5,7 +5,7 @@ import { TransactionContext } from "../context/TransactionContext";
 import useFetch from "../hooks/useFetch";
 import { shortenAddress } from "../utils/shortenAddress";
 
-const TransactionsCard = ({ addressTo, addressFrom, timestamp, message, keyword, amount, url }) => {
+export const TransactionsCard = ({ addressTo, addressFrom, timestamp, message, keyword, amount, url }) => {
   const gifUrl = useFetch({ keyword });
 
   return (
