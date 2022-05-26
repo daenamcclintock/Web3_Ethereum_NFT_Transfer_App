@@ -7,6 +7,7 @@ export const TransactionContext = React.createContext();
 
 const { ethereum } = window;
 
+// Function to create the Ethereum
 const createEthereumContract = () => {
   const provider = new ethers.providers.Web3Provider(ethereum);
   const signer = provider.getSigner();
