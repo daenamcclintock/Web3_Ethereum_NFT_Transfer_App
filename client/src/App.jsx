@@ -1,10 +1,10 @@
-import { Navbar, Welcome, Footer, NFTs, Transactions } from "./components";
+import { Navbar, Crypto, Footer, NFTs, Transactions } from "./components";
 
 const App = () => (
   <div className="min-h-screen">
     <div className="gradient-bg-welcome">
       <Navbar />
-      <Welcome />
+      <Crypto />
     </div>
     <NFTs />
     <Transactions />
